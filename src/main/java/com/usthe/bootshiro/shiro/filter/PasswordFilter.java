@@ -6,6 +6,7 @@ import com.usthe.bootshiro.domain.vo.Message;
 import com.usthe.bootshiro.shiro.token.PasswordToken;
 import com.usthe.bootshiro.util.CommonUtil;
 import com.usthe.bootshiro.util.IpUtil;
+import com.usthe.bootshiro.util.RSAUtil;
 import com.usthe.bootshiro.util.RequestResponseUtil;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -50,15 +51,21 @@ public class PasswordFilter extends AccessControlFilter {
 
         // 判断若为获取登录注册加密动态秘钥请求
         if (isPasswordTokenGet(request)) {
-            //动态生成秘钥，redis存储秘钥供之后秘钥验证使用，设置有效期5秒用完即丢弃
+            //动态生成非对称加密使用的私钥和公钥，redis存储私钥供之后秘钥验证使用，设置有效期5秒用完即丢弃
             String tokenKey = CommonUtil.getRandomString(16);
+            Map<String,String> keyMap = RSAUtil.createKeys();
+            String privateKey = keyMap.get("privateKey");
+            String publicKey = keyMap.get("publicKey");
+
+
+
             String userKey = CommonUtil.getRandomString(6);
             try {
-                redisTemplate.opsForValue().set("TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),tokenKey,5, TimeUnit.SECONDS);
-                // 动态秘钥response返回给前端
+                redisTemplate.opsForValue().set("TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),privateKey,5, TimeUnit.SECONDS);
+                // 公钥response返回给前端
                 Message message = new Message();
                 message.ok(1000,"issued tokenKey success")
-                        .addData("tokenKey",tokenKey).addData("userKey", userKey.toUpperCase());
+                        .addData("tokenKey",publicKey).addData("userKey", userKey.toUpperCase());
                 RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
 
             }catch (Exception e) {

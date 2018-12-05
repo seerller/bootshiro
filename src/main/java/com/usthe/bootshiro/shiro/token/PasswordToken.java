@@ -1,6 +1,7 @@
 package com.usthe.bootshiro.shiro.token;
 
 import com.usthe.bootshiro.util.AESUtil;
+import com.usthe.bootshiro.util.RSAUtil;
 import org.apache.shiro.authc.AuthenticationToken;
 
 /* *
@@ -21,7 +22,7 @@ public class PasswordToken implements AuthenticationToken{
         this.appId = appId;
         this.timestamp = timestamp;
         this.host = host;
-        this.password = AESUtil.aesDecode(password,tokenKey);
+        this.password = RSAUtil.RSADecode(password,tokenKey);
         this.tokenKey = tokenKey;
 
     }
